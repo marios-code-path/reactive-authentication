@@ -67,7 +67,7 @@ bean is provided automatically if there are no other configured [ReactiveAuthent
 
 Spring comes with ready-made implemenations for storing and looking up users in the [MapReactiveUserDetailsService](http://MapReactiveUserDetailsService). We'll complete this section by making 2 uses of this bean - one MapReactive, the other our own - to illustrate simplicity in overriding and levering this component..
 
-First, the custom User domain object with UserDetails as prescribed by the UserDetailsService interface:
+First, the custom User domain object with UserDetails as prescribed by the `UserDetailsService` interface:
 
 ExampleUser.java:
 
@@ -137,7 +137,7 @@ ExampleUser.java:
         }
     }
 
-We will also need a way to find our users. This demo will use a pre-programmed List() of users to hold any UserDetails we want to expose throughout the app. We provide a few convenicne methods to setting up the object. Of significant import is the [PasswordEncoder](https://docs.spring.io/spring-security/site/docs/4.2.4.RELEASE/apidocs/org/springframework/security/crypto/password/PasswordEncoder.html) that is used to encrypt/encode (defaults to bcrypt) plaintext.
+We will also need a way to find our users. This demo will use a pre-programmed `List()` of users to hold any UserDetails we want to expose throughout the app. We provide a few convenience methods to setting up the object. Of significant import is the [PasswordEncoder](https://docs.spring.io/spring-security/site/docs/4.2.4.RELEASE/apidocs/org/springframework/security/crypto/password/PasswordEncoder.html) that is used to encrypt (defaults to bcrypt) plaintext.
 
 UserDetailServiceBean.java:
 
@@ -159,7 +159,7 @@ UserDetailServiceBean.java:
             ));
     //...
 
-Now, with users available, we can wire in a UserDetailService. Lets start with the easy-to-use MapReactiveUserDetailService. We'll bind it to a spring profile "map-reactive" for use case demonstration.
+Now, with users available, we can wire in a [UserDetailService](http://UserDetailService). Lets start with the easy-to-use [MapReactiveUserDetailService](http://mapReactiveUserDetailService). We'll bind it to a spring profile `"map-reactive"` for use case demonstration.
 
 UserDetailServiceBean.java:
 
@@ -169,7 +169,7 @@ UserDetailServiceBean.java:
         return new MapReactiveUserDetailsService(users);
     }
 
-What if I wanted to implement my own ReactiveUserDetailService? This can be accomplished! simply wire in an own implementation of ReactiveUserDetailsService as a bean. We'll bind it ot the spring profile "custom" for use case demonstration.
+What if I wanted to implement my own [ReactiveUserDetailService](http://ReactiveUserDetailService)? This can be accomplished! simply wire in an own implementation of [ReactiveUserDetailService](http://ReactiveUserDetailService) as a bean. We'll bind it ot the spring profile `"custom"` for use case demonstration.
 
 UserDetailServiceBeans.java:
 
@@ -183,3 +183,11 @@ UserDetailServiceBeans.java:
             return maybeUser.map(Mono::just).orElse(Mono.empty());
         }
     }
+
+This way we can call our services and be sure that the [AuthenticationPrincipal](http://AuthenticationPrincipal) referenced in every request is our own `ExampleUser`.
+
+## Recap
+
+Spring Security offers a rich and complete set of solutions for implementing authenticaiton and authorization schemes into our WebFlux application. The ReativeAuthenticationManager and ReactiveAuthorizationManagers do much of the work at the WebFilter level.  ServerHttpSecurity helps us to wire all this together using a fluent API.
+
+What we want to do next is provide a oAuth2 solutions to our applications. We will tackle that in the next article for Spring Security Webflux.
