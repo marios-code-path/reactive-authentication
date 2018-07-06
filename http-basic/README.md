@@ -1,18 +1,16 @@
 
 # Reactive Spring Security Authentication
 
-Getting into concepts behind Spring Security Reactive's Authentication components. We will discover the direction needed to make exposing your custom user domain simple, and understandable. Spring comes pre-packed with a good coverage of use-cases (specifically in the username/password flows), as we can solve some additional authentication issues by re-using these components.
-
-Spring Authentication requires detailed knowledge of the underlaying authentication protocol at work. We may need to authenticate using a login form (HTTP BASIC) or a token exchange (oAuth2). Lets take a look at a username/password flow, so we can explore the inner-workings in detail for the oAuth2 flow later.
+This demonstration examines Spring Security WebFlux's Authentication mechanisms. We will look at Authentication request escalation, as well as user-domain customizations.
 
 ## Authentication flow-control
 
 How do we determine when a request must provide an authenticated context? Spring does this with help from an [AuthenticationEntryPoint](https://docs.spring.io/spring-security/site/docs/5.0.0.M3/api/org/springframework/security/web/server/AuthenticationEntryPoint.html)
-that converts eligible requests into a possible authentication response by means of headers, status code, form login, etc..
+that identifies un-authenticated requests and returns with a response to the user to perform some authentication action.
 
-Configure [ServerHttpSecurity](http://foo-bar) to use HTTP-BASIC by calling it's `httpBasic()` method. This will auto-configure handlers, and expose [HttpBasicSpec](http://foo-bar)'s lower level components such as the [ReactiveAuthenticationManager](http://foo-bar). For now, we are interested in overriding the default [HttpBasicServerAuthenticationEntryPoint](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/web/server/authentication/HttpBasicServerAuthenticationEntryPoint.html) it provides. This entry-point responds to un-authenticated requests with `WWW-Authenticate` headers and status 401, triggering the HTTP-Basic login interaction.
+Configure [ServerHttpSecurity](http://foo-bar) to use HTTP-BASIC by calling it's `httpBasic()` method. This will enable HTTP-Basic within WebFlux while exposing [HttpBasicSpec](http://foo-bar)'s lower level components such as the [ReactiveAuthenticationManager](http://foo-bar) for customization. For now, we are interested in overriding the default [HttpBasicServerAuthenticationEntryPoint](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/web/server/authentication/HttpBasicServerAuthenticationEntryPoint.html) it provides. This entry-point escalates authentication by sending `WWW-Authenticate` headers with status 401, triggering the HTTP-Basic login interaction.
 
-We can customize this behaviour via the [ExceptionHandlingSpec](http://foo-bar). To demonstrate, we can override the provided [HttpBasicServerAuthenticationEntryPoint](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/web/server/authentication/HttpBasicServerAuthenticationEntryPoint.html) with an [RedirectServerAuthenticationEntryPoint](http://foo-bar) that redirects users to the "/custom-login" view.
+We can customize the HTTP-BASIC flow by configuring exception handling on the [ServerHttpSecurity](http://foo-bar). Override the provided [HttpBasicServerAuthenticationEntryPoint](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/web/server/authentication/HttpBasicServerAuthenticationEntryPoint.html) with an [RedirectServerAuthenticationEntryPoint](http://foo-bar) that redirects users to the "/custom-login" view.
 
 NOTE: I do not condon the muddling of authentication flows; this is just an example:
 
@@ -33,34 +31,43 @@ SecurityConfiguration.java:
                 .build();
     }
 
-### Highlighting Authentication flow-control paths
+### Access Restriction Customization
 
-[AuthenticationEntryPoint](https://docs.spring.io/spring-security/site/docs/5.0.0.M3/api/org/springframework/security/web/server/AuthenticationEntryPoint.html) is activated when an un-authenticated request raises an [AccessDeniedException](http://flow-control). The exception (by default) is caught within [ExceptionTranslationWebFilter](http://ExceptionTranslationWebFilter) to either deny access completely in case of an un-authorized user, or by calling [AuthenticationEntryPoint](https://docs.spring.io/spring-security/site/docs/5.0.0.M3/api/org/springframework/security/web/server/AuthenticationEntryPoint.html)'s `commence()` method to initiate authentication flow.
+[AuthenticationEntryPoint](https://docs.spring.io/spring-security/site/docs/5.0.0.M3/api/org/springframework/security/web/server/AuthenticationEntryPoint.html) is activated when an un-authenticated request raises an [AccessDeniedException](http://flow-control). The exception is caught within [ExceptionTranslationWebFilter](http://ExceptionTranslationWebFilter) and determines whether to block access, or escalate to authentication. The later is accomplished by invoking [AuthenticationEntryPoint](https://docs.spring.io/spring-security/site/docs/5.0.0.M3/api/org/springframework/security/web/server/AuthenticationEntryPoint.html)'s `commence()` method to initiate an authentication flow.
 
-Additionally, we can alter the access-denial behaviour as well providing an [ServerAccessDeniedHandler](http://ServerAcessDeniedHandler) to [ExceptionHandlingSpec](http://foo-bar)'s `accessDeniedHandler()` method.
+Change the rejection behaviour by providing an [ServerAccessDeniedHandler](http://ServerAcessDeniedHandler) to [ExceptionHandlingSpec](http://foo-bar)'s `accessDeniedHandler()` method.
 
-## Authentication Mechanisms
+SecurityXConfiguration.java:
 
-AuthenticationManager is the interface that manages the authentication flow details - roles, username, credential, IP, etc.. -. Example is UsernamePasswordAuthenticationToken used for processing simple username/password credentials.of special note is method `isAuthenticated()` which tells Spring Security whether it should authenticate a user (e.g. HTTP basic authenticate), or pass the request along the filter chain to complete the original request.
+    @Bean
+    public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
 
-This UsernamePasswordAuthenticationToken is created 2 times; pre-auth where the AuthenticationManager receives a interactive credential from the user for authenticating, and thus `isAuthenticated()` is `false`. The other time we see this instance is on authentication success, where its populated with principal details, and `isAuthenticated()` return `true`.
+        return http
+        ...
+        .and()
+        .exceptionHandling()
+        .accessDeniedHandler(new HttpStatusServerAccessDeniedHandler(HttpStatus.BAD_REQUEST))
+        .and()
+        ...
 
-A WebFilterExchange will contain both the ServerWebExchange, and the WebFilterChain.
+Now, with any access restriction, the client will see HTTP 400 instead of 403.
+
+## Authenticating Users
 
 [ReactiveAuthenticationManager](https://docs.spring.io/spring-security/site/docs/5.0.x/api/org/springframework/security/authentication/ReactiveAuthenticationManager.html)
-does the job of facilitating authentication mechanisms - e.g. HTTP/BASIC which is included automatically- in your web application.
+does the job of facilitating user and credential validation within the application. We can also use this component to escalate and complete the authentication process for a given flow.
 
 NOTE: Spring provides an integration component [ReactiveAuthenticationManagerAdapter](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/authentication/ReactiveAuthenticationManagerAdapter.html)
 for hoisting your existing, classic AuthenticationManager implementations into the reactive world.
 
-### Custom Domain Users
+### Customizing the User
 
 The [UserDetailsRepositoryReactiveAuthenticationManager](https://docs.spring.io/spring-security/site/docs/5.0.3.RELEASE/api/org/springframework/security/authentication/UserDetailsRepositoryReactiveAuthenticationManager.html)
-bean is provided automatically if there are no other configured ReactiveAuthenticationManagers `@Bean` definitions. This authentication manager defers principal/credential operations to a [ReactiveUserDetailsService](https://docs.spring.io/spring-security/site/docs/5.1.0.M1/api/org/springframework/security/core/userdetails/ReactiveUserDetailsService.html).
+bean is provided automatically if there are no other configured [ReactiveAuthenticationManager](http://ReactiveAuthenticationManager) `@Bean` definitions. This authentication manager defers principal/credential operations to a [ReactiveUserDetailsService](https://docs.spring.io/spring-security/site/docs/5.1.0.M1/api/org/springframework/security/core/userdetails/ReactiveUserDetailsService.html) implementation.
 
-Spring comes with ready-made implemenations for storing and looking up users in the MapReactiveUserDetailsService - simple for demos - but we want to go a little in depth.  We'll complete this section by making 2 uses of this bean - one MapReactive, the other our own - to illustrate simplicity in overriding and levering this component..
+Spring comes with ready-made implemenations for storing and looking up users in the [MapReactiveUserDetailsService](http://MapReactiveUserDetailsService). We'll complete this section by making 2 uses of this bean - one MapReactive, the other our own - to illustrate simplicity in overriding and levering this component..
 
-First, the custom User domain object which implements UserDetails as prescribed by the UserDetailsService interface:
+First, the custom User domain object with UserDetails as prescribed by the UserDetailsService interface:
 
 ExampleUser.java:
 
@@ -130,7 +137,7 @@ ExampleUser.java:
         }
     }
 
-We need to provide a way to get our users out of a user service, in this demo we will use a pre-programmed List() of users to hold any UserDetails we want to expose through the app. We provide a few convenicne methods to setting up the object. Of significant import is the [PasswordEncoder](https://docs.spring.io/spring-security/site/docs/4.2.4.RELEASE/apidocs/org/springframework/security/crypto/password/PasswordEncoder.html) that is used to encrypt/encode (defaults to bcrypt) plaintext.
+We will also need a way to find our users. This demo will use a pre-programmed List() of users to hold any UserDetails we want to expose throughout the app. We provide a few convenicne methods to setting up the object. Of significant import is the [PasswordEncoder](https://docs.spring.io/spring-security/site/docs/4.2.4.RELEASE/apidocs/org/springframework/security/crypto/password/PasswordEncoder.html) that is used to encrypt/encode (defaults to bcrypt) plaintext.
 
 UserDetailServiceBean.java:
 
@@ -162,9 +169,7 @@ UserDetailServiceBean.java:
         return new MapReactiveUserDetailsService(users);
     }
 
-Because we have satisified all of the core componetns needed ot lock down our applicaiton, We can actually stop here with configuration.
-
-On the other hand, what if I wanted to implement my own ReactiveUserDetailService? This can be accomplished! simply wire in an own implementation of ReactiveUserDetailsService as a bean. We'll bind it ot the spring profile "custom" for use case demonstration.
+What if I wanted to implement my own ReactiveUserDetailService? This can be accomplished! simply wire in an own implementation of ReactiveUserDetailsService as a bean. We'll bind it ot the spring profile "custom" for use case demonstration.
 
 UserDetailServiceBeans.java:
 
@@ -178,5 +183,3 @@ UserDetailServiceBeans.java:
             return maybeUser.map(Mono::just).orElse(Mono.empty());
         }
     }
-
-
