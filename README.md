@@ -5,7 +5,7 @@ This demonstration examines Spring Security WebFlux's Authentication mechanisms.
 
 ## Authentication flow-control
 
-How do we determine when a request must provide an authenticated context? Spring does this with help from an [AuthenticationEntryPoint](https://docs.spring.io/spring-security/site/docs/5.0.0.M3/api/org/springframework/security/web/server/AuthenticationEntryPoint.html)
+How do we determine when a request must provide an authentication context? Spring does this with help from an [AuthenticationEntryPoint](https://docs.spring.io/spring-security/site/docs/5.0.0.M3/api/org/springframework/security/web/server/AuthenticationEntryPoint.html)
 that identifies un-authenticated requests and returns with a response to the user to perform some authentication action.
 
 Configure [ServerHttpSecurity](http://foo-bar) to use HTTP-BASIC by calling it's `httpBasic()` method. This will enable HTTP-Basic within WebFlux while exposing [HttpBasicSpec](http://foo-bar)'s lower level components such as the [ReactiveAuthenticationManager](http://foo-bar) for customization. For now, we are interested in overriding the default [HttpBasicServerAuthenticationEntryPoint](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/web/server/authentication/HttpBasicServerAuthenticationEntryPoint.html) it provides. This entry-point escalates authentication by sending `WWW-Authenticate` headers with status 401, triggering the HTTP-Basic login interaction.
