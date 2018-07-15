@@ -1,5 +1,14 @@
++++
+date = 2018-07-14
+publishDate = 2018-07-14
+title = "Setup and customize Authentication against a WebFlux Application"
+description = "Spring Security provides a intuitive and concise API for managing Authentication aspects within your app."
+toc = true
+categories = ["appsec","security","reactive"]
+tags = ["functional","java","spring","web","demo"]
++++
 
-# Reactive Spring Security Authentication
+# Configuring Authentication against a WebFlux app
 
 This demonstration examines Spring Security WebFlux's Authentication mechanisms. We will look at Authentication request escalation, as well as user-domain customizations.
 
