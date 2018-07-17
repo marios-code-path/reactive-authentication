@@ -9,6 +9,8 @@ import org.springframework.web.reactive.config.EnableWebFlux;
 public class HttpBasicApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(HttpBasicApplication.class, args);
+		SpringApplication app = new SpringApplication(HttpBasicApplication.class);
+		app.setAdditionalProfiles("custom");
+		app.run(args);
 	}
 }

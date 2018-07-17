@@ -33,9 +33,9 @@ public class SecurityConfiguration {
                         Arrays.asList(new AnonymousAuthenticationProvider("ANON"))
                 ));
     }
+
     @Bean
-    public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http,
-                                                         MapReactiveUserDetailsService userDetailsService) {
+    public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
 
         return http
 
@@ -43,9 +43,11 @@ public class SecurityConfiguration {
                 .pathMatchers("/hello")
                 .hasRole("USER")
                 .and()
+                .exceptionHandling()
+                    .authenticationEntryPoint(new RedirectServerAuthenticationEntryPoint("/form-login"))
+                    .accessDeniedHandler(new HttpStatusServerAccessDeniedHandler(HttpStatus.BAD_REQUEST))
+                .and()
                 .httpBasic()
-                    .authenticationManager(
-                            new UserDetailsRepositoryReactiveAuthenticationManager(userDetailsService))
                 .and()
                 .build();
     }
