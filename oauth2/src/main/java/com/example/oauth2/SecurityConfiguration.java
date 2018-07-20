@@ -1,4 +1,4 @@
-package com.example.httpbasic;
+package com.example.oauth2;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
@@ -11,6 +11,9 @@ import org.springframework.security.config.annotation.web.reactive.EnableWebFlux
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.RedirectServerAuthenticationSuccessHandler;
+import org.springframework.web.reactive.config.ViewResolverRegistry;
+import org.springframework.web.reactive.config.WebFluxConfigurer;
+import org.springframework.web.reactive.result.view.freemarker.FreeMarkerConfigurer;
 
 import java.util.Arrays;
 
@@ -20,27 +23,20 @@ import java.util.Arrays;
 @Configuration
 public class SecurityConfiguration {
 
-    public ReactiveAuthenticationManagerAdapter anonymousManager() {
-        return new ReactiveAuthenticationManagerAdapter(
-                new ProviderManager(
-                        Arrays.asList(new AnonymousAuthenticationProvider("ANON"))
-                ));
-    }
-
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
 
         return http
                 .authorizeExchange()
-                .pathMatchers("/*")
-                .hasRole("USER")
                 .pathMatchers("/hello")
                 .hasRole("USER")
+                .pathMatchers("/**")
+                .permitAll()
                 .and()
                 .formLogin()
                 .authenticationSuccessHandler(new RedirectServerAuthenticationSuccessHandler("/hello"))
                 .and()
-                .httpBasic()
+                .csrf()
                 .and()
                 .build();
     }
