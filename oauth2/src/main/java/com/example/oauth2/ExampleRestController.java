@@ -5,11 +5,6 @@ import org.springframework.boot.web.reactive.result.view.MustacheViewResolver;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.security.web.csrf.CsrfToken;
-import org.springframework.security.web.csrf.CsrfTokenRepository;
-import org.springframework.security.web.server.csrf.DefaultCsrfToken;
-import org.springframework.security.web.server.csrf.ServerCsrfTokenRepository;
-import org.springframework.security.web.server.csrf.WebSessionServerCsrfTokenRepository;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.config.ViewResolverRegistry;
 import org.springframework.web.reactive.config.WebFluxConfigurer;
@@ -19,8 +14,7 @@ import org.springframework.web.reactive.function.server.RouterFunctions;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import org.springframework.web.reactive.result.view.freemarker.FreeMarkerConfigurer;
 import reactor.core.publisher.Mono;
-
-import java.util.Collections;
+import org.springframework.security.web.server.csrf.CsrfToken;
 
 @RestController
 @Slf4j
@@ -56,18 +50,16 @@ public class ExampleRestController {
                         r -> ServerResponse.ok().render("index")
                 )
                 .andRoute(RequestPredicates.GET("/form-login"),
-                        r -> {
-                            // CSRF Filter to provide token.
-                            return ServerResponse.ok().render("form-login",
-                                    Collections.singletonMap("_csrf",
-                                            new WebSessionServerCsrfTokenRepository().loadToken(r.exchange()).switchIfEmpty(Mono.just(
-                                                    new DefaultCsrfToken("X-CSRF-TOKEN", "_csrf", "NOP")
-                                            ))
-                                            // !!! CSRF Token Filter not applying the token
-
-                                    )
-                            );
-                        }
+                        r -> r.exchange()
+                                .getAttributeOrDefault(
+                                        CsrfToken.class.getName(),
+                                        Mono.empty().ofType(CsrfToken.class)
+                                ).flatMap(csrfToken -> {
+//                                   r.exchange()
+//                                    .getAttributes().put(csrfToken.getParameterName(), csrfToken);
+                                   r.attributes().put(csrfToken.getParameterName(), csrfToken);
+                                   return ServerResponse.ok().render("form-login");
+                                })
                 );
     }
 }

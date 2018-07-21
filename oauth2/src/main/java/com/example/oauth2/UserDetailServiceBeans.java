@@ -3,6 +3,7 @@ package com.example.oauth2;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.core.userdetails.MapReactiveUserDetailsService;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,8 +22,12 @@ public class UserDetailServiceBeans {
     private static final PasswordEncoder pw = PasswordEncoderFactories.createDelegatingPasswordEncoder();
 
     private static UserDetails user(String u, String... roles) {
-        return new ExampleUser(new ExampleUser.Account(u, pw.encode("pw"), true),
-                roles);
+        return User.builder()
+                .passwordEncoder(pw::encode)
+                .username(u)
+                .password("pw")
+                .roles(roles)
+                .build();
     }
 
     private static final Collection<UserDetails> users = new ArrayList<>(
