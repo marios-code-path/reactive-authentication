@@ -57,6 +57,7 @@ public class ExampleRestController {
                                 ).flatMap(csrfToken -> {
 //                                   r.exchange()
 //                                    .getAttributes().put(csrfToken.getParameterName(), csrfToken);
+                                    log.info("CSRFTOKEN: " + csrfToken.getToken() );
                                    r.attributes().put(csrfToken.getParameterName(), csrfToken);
                                    return ServerResponse.ok().render("form-login");
                                 })

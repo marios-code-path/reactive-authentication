@@ -7,9 +7,6 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.reactive.config.ViewResolverRegistry;
-import org.springframework.web.reactive.config.WebFluxConfigurer;
-import org.springframework.web.reactive.result.view.freemarker.FreeMarkerConfigurer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,11 +19,11 @@ public class UserDetailServiceBeans {
     private static final PasswordEncoder pw = PasswordEncoderFactories.createDelegatingPasswordEncoder();
 
     private static UserDetails user(String u, String... roles) {
-        return User.builder()
-                .passwordEncoder(pw::encode)
+        return User
+                .withDefaultPasswordEncoder()
                 .username(u)
                 .password("pw")
-                .roles(roles)
+                .authorities(roles)
                 .build();
     }
 
