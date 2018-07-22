@@ -5,6 +5,7 @@ import org.springframework.boot.web.reactive.result.view.MustacheViewResolver;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.security.web.server.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.config.ViewResolverRegistry;
 import org.springframework.web.reactive.config.WebFluxConfigurer;
@@ -12,9 +13,7 @@ import org.springframework.web.reactive.function.server.RequestPredicates;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.RouterFunctions;
 import org.springframework.web.reactive.function.server.ServerResponse;
-import org.springframework.web.reactive.result.view.freemarker.FreeMarkerConfigurer;
 import reactor.core.publisher.Mono;
-import org.springframework.security.web.server.csrf.CsrfToken;
 
 @RestController
 @Slf4j
@@ -54,13 +53,13 @@ public class ExampleRestController {
                                 .getAttributeOrDefault(
                                         CsrfToken.class.getName(),
                                         Mono.empty().ofType(CsrfToken.class)
-                                ).flatMap(csrfToken -> {
-//                                   r.exchange()
-//                                    .getAttributes().put(csrfToken.getParameterName(), csrfToken);
-                                    log.info("CSRFTOKEN: " + csrfToken.getToken() );
-                                   r.attributes().put(csrfToken.getParameterName(), csrfToken);
-                                   return ServerResponse.ok().render("form-login");
-                                })
+                                ).doOnNext(csrfToken ->
+                                    r.exchange().getAttributes().put(csrfToken.getParameterName(), csrfToken)
+                                )
+                                .flatMap(t -> ServerResponse
+                                        .ok()
+                                        .render("form-login",
+                                                r.exchange().getAttributes()))
                 );
     }
 }
@@ -79,15 +78,6 @@ class WebConfig implements WebFluxConfigurer {
     @Override
     public void configureViewResolvers(ViewResolverRegistry registry) {
         registry.viewResolver(resolver);
-        registry.freeMarker();
     }
 
-    // .. Configure Freemarker
-    @Bean
-    public FreeMarkerConfigurer freeMarkerConfigurer() {
-        FreeMarkerConfigurer configurer = new FreeMarkerConfigurer();
-        configurer.setTemplateLoaderPath("classpath:templates/freemarker");
-
-        return configurer;
-    }
 }
