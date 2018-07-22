@@ -5,6 +5,9 @@ import org.springframework.boot.web.reactive.result.view.MustacheViewResolver;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.server.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.config.ViewResolverRegistry;
@@ -15,25 +18,11 @@ import org.springframework.web.reactive.function.server.RouterFunctions;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
+import java.util.Collections;
+
 @RestController
 @Slf4j
 public class ExampleRestController {
-
-    @Bean
-    RouterFunction<?> routes() {
-        return RouterFunctions
-                .route(RequestPredicates.GET("/hello"),
-                        r -> ServerResponse
-                                .ok()
-                                .body(r.principal()
-                                                .repeat()
-                                                .zipWith(
-                                                        Mono.just("Hello "),
-                                                        (pp, str) -> str + pp.getName()),
-                                        String.class)
-
-                );
-    }
 
     @Bean
     RouterFunction<?> assetRoutes() {
@@ -45,21 +34,28 @@ public class ExampleRestController {
     @Bean
     RouterFunction<?> viewRoutes() {
         return RouterFunctions
-                .route(RequestPredicates.GET("/index"),
-                        r -> ServerResponse.ok().render("index")
-                )
-                .andRoute(RequestPredicates.GET("/form-login"),
+                .route(RequestPredicates.GET("/form-login"),
                         r -> r.exchange()
                                 .getAttributeOrDefault(
                                         CsrfToken.class.getName(),
                                         Mono.empty().ofType(CsrfToken.class)
-                                ).doOnNext(csrfToken ->
-                                    r.exchange().getAttributes().put(csrfToken.getParameterName(), csrfToken)
+                                ).flatMap(csrfToken -> {
+                                            r.exchange().getAttributes().put(csrfToken.getParameterName(), csrfToken);
+                                            return ServerResponse
+                                                    .ok()
+                                                    .render("form-login",
+                                                            r.exchange().getAttributes());
+                                        }
                                 )
-                                .flatMap(t -> ServerResponse
-                                        .ok()
-                                        .render("form-login",
-                                                r.exchange().getAttributes()))
+                )
+                .andRoute(RequestPredicates.GET("/"),
+                        r -> r.principal()
+                                .ofType(Authentication.class)
+                                .flatMap(auth -> {
+                                    User user = User.class.cast(auth.getPrincipal());
+                                    return ServerResponse.ok().render("index",
+                                            Collections.singletonMap("user", user));
+                                })
                 );
     }
 }

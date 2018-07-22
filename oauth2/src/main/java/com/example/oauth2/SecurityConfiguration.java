@@ -20,13 +20,13 @@ public class SecurityConfiguration {
 
         return http
                 .authorizeExchange()
-                .pathMatchers("/hello")
-                .hasRole("USER")
-                .pathMatchers("/**")
+                .pathMatchers("/form-login")
                 .permitAll()
+                .pathMatchers("/**")
+                .hasRole("USER")
                 .and()
                 .formLogin()
-                .authenticationSuccessHandler(new RedirectServerAuthenticationSuccessHandler("/hello"))
+                    .authenticationSuccessHandler(new RedirectServerAuthenticationSuccessHandler("/"))
                 .and()
                 .csrf()
                 .and()
