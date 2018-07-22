@@ -19,9 +19,10 @@ public class UserDetailServiceBeans {
     private static final PasswordEncoder pw = PasswordEncoderFactories.createDelegatingPasswordEncoder();
 
     private static UserDetails user(String u, String... roles) {
+
         return User
-                .withDefaultPasswordEncoder()
-                .username(u)
+                .withUsername(u)
+                .passwordEncoder(pw::encode)
                 .password("pw")
                 .authorities(roles)
                 .build();
