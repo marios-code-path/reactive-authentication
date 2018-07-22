@@ -1,4 +1,4 @@
-package com.example.oauth2;
+package com.example.formlogin;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

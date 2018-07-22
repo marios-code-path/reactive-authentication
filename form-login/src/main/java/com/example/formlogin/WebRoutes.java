@@ -1,4 +1,4 @@
-package com.example.oauth2;
+package com.example.formlogin;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.web.reactive.result.view.MustacheViewResolver;
@@ -8,6 +8,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.web.server.csrf.CsrfToken;
+import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.config.ViewResolverRegistry;
 import org.springframework.web.reactive.config.WebFluxConfigurer;
@@ -19,21 +20,27 @@ import reactor.core.publisher.Mono;
 
 import java.util.Collections;
 
-@RestController
+@Component
 @Slf4j
-public class ExampleRestController {
+public class WebRoutes {
+
+    @Bean
+    RouterFunction<?> iconResources() {
+        return RouterFunctions
+                .resources("/favicon**", new ClassPathResource("images/favicon.ico"));
+    }
+
 
     @Bean
     RouterFunction<?> assetRoutes() {
         return RouterFunctions
-                .resources("/images/**", new ClassPathResource("images/")
-                );
+                .resources("/images/**", new ClassPathResource("images/"));
     }
 
     @Bean
     RouterFunction<?> viewRoutes() {
         return RouterFunctions
-                .route(RequestPredicates.GET("/form-login"),
+                .route(RequestPredicates.GET("/login"),
                         r -> r.exchange()
                                 .getAttributeOrDefault(
                                         CsrfToken.class.getName(),

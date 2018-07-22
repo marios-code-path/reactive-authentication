@@ -1,4 +1,4 @@
-package com.example.oauth2;
+package com.example.formlogin;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
