@@ -4,12 +4,12 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.example</groupId>
-	<artifactId>oauth2</artifactId>
+	<artifactId>form-login</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
-	<name>oauth2</name>
-	<description>Demo project for Spring Boot</description>
+	<name>form-login</name>
+	<description>Reactive Form Login Example</description>
 
 	<parent>
 		<groupId>org.springframework.boot</groupId>
@@ -49,26 +49,6 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.security.oauth.boot</groupId>
-			<artifactId>spring-security-oauth2-autoconfigure</artifactId>
-			<version>2.0.1.RELEASE</version>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.security.oauth</groupId>
-			<artifactId>spring-security-oauth2</artifactId>
-			<version>2.2.1.RELEASE</version>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-security-oauth2-client</artifactId>
-			<version>LATEST</version>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-security-oauth2-jose</artifactId>
-			<version>LATEST</version>
 		</dependency>
 		<dependency>
 			<groupId>io.projectreactor</groupId>
