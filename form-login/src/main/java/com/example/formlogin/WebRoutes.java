@@ -26,7 +26,7 @@ public class WebRoutes {
     @Bean
     RouterFunction<?> iconResources() {
         return RouterFunctions
-                .resources("/favicon**", new ClassPathResource("images/favicon.ico"));
+                .resources("/favicon.ico", new ClassPathResource("images/favicon.ico"));
     }
 
 

@@ -30,14 +30,13 @@ public class UserDetailServiceBeans {
 
     private static final Collection<UserDetails> users = new ArrayList<>(
             Arrays.asList(
-                    user("thor", "ROLE_ADMIN"),
+                    user("thor", "ROLE_USER"),
                     user("loki", "ROLE_USER"),
-                    user("zeus", "ROLE_ADMIN", "ROLE_USER")
+                    user("odin", "ROLE_ADMIN", "ROLE_USER")
             ));
 
     @Bean
     public MapReactiveUserDetailsService mapReactiveUserDetailsService() {
         return new MapReactiveUserDetailsService(users);
     }
-
 }

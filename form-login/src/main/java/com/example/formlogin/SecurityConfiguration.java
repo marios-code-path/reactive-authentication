@@ -24,13 +24,10 @@ public class SecurityConfiguration {
 
         return http
                 .authorizeExchange()
-                .pathMatchers("/login")
-                .permitAll()
-                .pathMatchers("/bye")
-                .permitAll()
-                .pathMatchers("/favicon**")
-                .permitAll()
-                .pathMatchers("/images/**")
+                .pathMatchers("/login",
+                        "/bye",
+                        "/favicon.ico",
+                        "/images/**")
                 .permitAll()
                 .pathMatchers("/**")
                 .hasRole("USER")
@@ -55,5 +52,3 @@ public class SecurityConfiguration {
 
     }
 }
-
-
