@@ -1,4 +1,4 @@
-+++
+---
 date = 2018-07-14
 publishDate = 2018-07-14
 title = "Setup and customize Authentication against a WebFlux Application"
@@ -6,7 +6,7 @@ description = "Spring Security provides a intuitive and concise API for managing
 toc = true
 categories = ["appsec","security","reactive"]
 tags = ["functional","java","spring","web","demo"]
-+++
+---
 
 # Configuring Authentication against a WebFlux app
 
