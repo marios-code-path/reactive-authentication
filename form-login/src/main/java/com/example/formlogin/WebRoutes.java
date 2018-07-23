@@ -1,6 +1,5 @@
 package com.example.formlogin;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.web.reactive.result.view.MustacheViewResolver;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,20 +19,12 @@ import reactor.core.publisher.Mono;
 import java.util.Collections;
 
 @Component
-@Slf4j
 public class WebRoutes {
 
     @Bean
     RouterFunction<?> iconResources() {
         return RouterFunctions
-                .resources("/favicon.ico", new ClassPathResource("images/favicon.ico"));
-    }
-
-
-    @Bean
-    RouterFunction<?> assetRoutes() {
-        return RouterFunctions
-                .resources("/images/**", new ClassPathResource("images/"));
+                .resources("/favicon.**", new ClassPathResource("images/favicon.ico"));
     }
 
     @Bean
