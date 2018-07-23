@@ -8,13 +8,13 @@ import java.util.Properties;
 
 @SpringBootApplication
 @EnableWebFlux
-public class Oauth2Application {
+public class FormLoginApp {
 
     public static void main(String[] args) {
-        SpringApplication app = new SpringApplication(Oauth2Application.class);
+        SpringApplication app = new SpringApplication(FormLoginApp.class);
         Properties props = new Properties();
         props.setProperty("spring.mustache.expose-request-attributes",
-                Boolean.TRUE.toString());
+                "true");
         app.setDefaultProperties(props);
 
         app.run();

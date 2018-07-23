@@ -9,7 +9,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.web.server.csrf.CsrfToken;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.config.ViewResolverRegistry;
 import org.springframework.web.reactive.config.WebFluxConfigurer;
 import org.springframework.web.reactive.function.server.RequestPredicates;
@@ -49,7 +48,7 @@ public class WebRoutes {
                                             r.exchange().getAttributes().put(csrfToken.getParameterName(), csrfToken);
                                             return ServerResponse
                                                     .ok()
-                                                    .render("form-login",
+                                                    .render("login-form",
                                                             r.exchange().getAttributes());
                                         }
                                 )
@@ -59,9 +58,29 @@ public class WebRoutes {
                                 .ofType(Authentication.class)
                                 .flatMap(auth -> {
                                     User user = User.class.cast(auth.getPrincipal());
+                                    r.exchange()
+                                            .getAttributes()
+                                            .putAll(Collections.singletonMap("user", user));
                                     return ServerResponse.ok().render("index",
-                                            Collections.singletonMap("user", user));
+                                            r.exchange().getAttributes());
                                 })
+                )
+                .andRoute(RequestPredicates.GET("/bye"),
+                        r -> ServerResponse.ok().render("bye")
+                )
+                .filter((q, r) ->
+                        q.exchange()
+                                .getAttributeOrDefault(
+                                        CsrfToken.class.getName(),
+                                        Mono.empty().ofType(CsrfToken.class)
+                                )
+                                .flatMap(csrfToken -> {
+                                    q.exchange()
+                                            .getAttributes()
+                                            .put(csrfToken.getParameterName(), csrfToken);
+                                    return r.handle(q);
+                                })
+
                 );
     }
 }

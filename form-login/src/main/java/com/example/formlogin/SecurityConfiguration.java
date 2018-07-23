@@ -8,6 +8,10 @@ import org.springframework.security.config.annotation.web.reactive.EnableWebFlux
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.RedirectServerAuthenticationSuccessHandler;
+import org.springframework.security.web.server.authentication.logout.RedirectServerLogoutSuccessHandler;
+import org.springframework.security.web.server.authentication.logout.ServerLogoutSuccessHandler;
+
+import java.net.URI;
 
 @EnableWebFluxSecurity
 @EnableReactiveMethodSecurity
@@ -20,7 +24,9 @@ public class SecurityConfiguration {
 
         return http
                 .authorizeExchange()
-                .pathMatchers("/form-login")
+                .pathMatchers("/login")
+                .permitAll()
+                .pathMatchers("/bye")
                 .permitAll()
                 .pathMatchers("/favicon**")
                 .permitAll()
@@ -30,11 +36,23 @@ public class SecurityConfiguration {
                 .hasRole("USER")
                 .and()
                 .formLogin()
-                .authenticationSuccessHandler(new RedirectServerAuthenticationSuccessHandler("/"))
+                    .loginPage("/login")
+                    .authenticationSuccessHandler(new RedirectServerAuthenticationSuccessHandler("/"))
+                .and()
+                .logout()
+                    .logoutUrl("/logout")
+                    .logoutSuccessHandler(logoutSuccessHandler("/bye"))
                 .and()
                 .csrf()
                 .and()
                 .build();
+    }
+
+    public ServerLogoutSuccessHandler logoutSuccessHandler(String uri) {
+        RedirectServerLogoutSuccessHandler successHandler = new RedirectServerLogoutSuccessHandler();
+        successHandler.setLogoutSuccessUrl(URI.create(uri));
+        return successHandler;
+
     }
 }
 
