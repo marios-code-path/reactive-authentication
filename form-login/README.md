@@ -12,6 +12,62 @@ tags = ["functional","java","spring","web","demo"]
 
 This demonstration examines Spring Security WebFlux's Authentication mechanisms. We will look at authentication with HTML forms using Mustache, http-basic login, and customized logout configurations.
 
+## A ServerHttpSecurity Configuration
+
+Normally, start with the website specifics, but we will begin with security configuration since this is a security-related article. With the @EnableWebFluxSecurity on, we can build the SecurityWebFilterChain by issuing commands to the ServerHttpSecurity DSL object.
+
+
+SecurityConfiguration.java:
+    @EnableWebFluxSecurity
+    @Slf4j
+    @Configuration
+    public class SecurityConfiguration {
+
+        @Bean
+        public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
+
+Next, we can open all of the public-facing endpoints by using a PathMatcher to match our public routes, and then applying permitAll to open permissions there.
+
+SecurityConfiguration.java:
+            return http
+                    .authorizeExchange()
+                    .pathMatchers("/login",
+                            "/bye",
+                            "/favicon.ico",
+                            "/images/**")
+                    .permitAll()
+
+For this example, we want every endpoint thats not publicly available to require a logged-in user. Wire in a PathMatcher for all routes, and apply the authenticated() operator to whatever matches. Then we can configure CSRF for handling our '_csrf' token state between requests. We will tackle the specifics for exposing the CSRF token, in the route/handler section.
+
+SecurityConfiguration.java:
+                    .pathMatchers("/**")
+                    .authenticated()
+                    .and()
+                    .csrf()
+
+SecurityConfiguration.java:
+
+
+                    .and()
+                    .formLogin()
+                        .loginPage("/login")
+                        .authenticationSuccessHandler(new RedirectServerAuthenticationSuccessHandler("/"))
+                    .and()
+                    .logout()
+                        .logoutUrl("/logout")
+                        .logoutSuccessHandler(logoutSuccessHandler("/bye"))
+                    .and()
+                    .build();
+        }
+
+        public ServerLogoutSuccessHandler logoutSuccessHandler(String uri) {
+            RedirectServerLogoutSuccessHandler successHandler = new RedirectServerLogoutSuccessHandler();
+            successHandler.setLogoutSuccessUrl(URI.create(uri));
+            return successHandler;
+        }
+
+    }
+
 ## An example website
 
 The website uses just 2 pages to describe a game. The game text is tanken from Infocom's Zork text-based adventure. In this demo we will have a user login, and finally do something to scalate permission. We will walk throuigh componentry needed to accomplish this task. Spring Security provides a reacgtve and concise way for describing security constraints within your web app.  
@@ -53,7 +109,10 @@ WebConfig.java:
 
 # Routing to views
 
-We need to wire up the login form with routing logic, so lets add this with functional reactive RouterFunction.
+We need to wire up our views with routing logic, so lets add this with the functional style RouterFunction.
+
+We need a way to display icons, so first we will wire in a 'favicon.ico' route, and send it to a ClassPath resource for file resolution.
+
 
 WebRoutes.java:
     @Component
@@ -65,54 +124,17 @@ WebRoutes.java:
                     .resources("/favicon.**", new ClassPathResource("images/favicon.ico"));
         }
 
-        @Bean
-        RouterFunction<?> viewRoutes() {
-            return RouterFunctions
-                    .route(RequestPredicates.GET("/login"),
-                            r -> r.exchange()
-                                    .getAttributeOrDefault(
-                                            CsrfToken.class.getName(),
-                                            Mono.empty().ofType(CsrfToken.class)
-                                    ).flatMap(csrfToken -> {
-                                                r.exchange().getAttributes().put(csrfToken.getParameterName(), csrfToken);
-                                                return ServerResponse
-                                                        .ok()
-                                                        .render("login-form",
-                                                                r.exchange().getAttributes());
-                                            }
-                                    )
-                    )
-                    .andRoute(RequestPredicates.GET("/"),
-                            r -> r.principal()
-                                    .ofType(Authentication.class)
-                                    .flatMap(auth -> {
-                                        User user = User.class.cast(auth.getPrincipal());
-                                        r.exchange()
-                                                .getAttributes()
-                                                .putAll(Collections.singletonMap("user", user));
-                                        return ServerResponse.ok().render("index",
-                                                r.exchange().getAttributes());
-                                    })
-                    )
-                    .andRoute(RequestPredicates.GET("/bye"),
-                            r -> ServerResponse.ok().render("bye")
-                    )
-                    .filter((q, r) ->
-                            q.exchange()
-                                    .getAttributeOrDefault(
-                                            CsrfToken.class.getName(),
-                                            Mono.empty().ofType(CsrfToken.class)
-                                    )
-                                    .flatMap(csrfToken -> {
-                                        q.exchange()
-                                                .getAttributes()
-                                                .put(csrfToken.getParameterName(), csrfToken);
-                                        return r.handle(q);
-                                    })
+WebRoutes.java:
+    @Bean
+    RouterFunction<?> viewRoutes() {
+        return RouterFunctions
+                .route(RequestPredicates.GET("/login"),
+                        req -> ServerResponse
+                                .ok()
+                                .render("login-form",
+                                        req.exchange().getAttributes())
 
-                    );
-        }
-    }
+                )
 
 
 ## Types of Routing

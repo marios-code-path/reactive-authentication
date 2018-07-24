@@ -30,7 +30,7 @@ public class SecurityConfiguration {
                         "/images/**")
                 .permitAll()
                 .pathMatchers("/**")
-                .hasRole("USER")
+                .authenticated()
                 .and()
                 .formLogin()
                     .loginPage("/login")
@@ -49,6 +49,6 @@ public class SecurityConfiguration {
         RedirectServerLogoutSuccessHandler successHandler = new RedirectServerLogoutSuccessHandler();
         successHandler.setLogoutSuccessUrl(URI.create(uri));
         return successHandler;
-
     }
+
 }

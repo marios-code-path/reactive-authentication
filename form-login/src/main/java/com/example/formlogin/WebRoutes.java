@@ -31,45 +31,38 @@ public class WebRoutes {
     RouterFunction<?> viewRoutes() {
         return RouterFunctions
                 .route(RequestPredicates.GET("/login"),
-                        r -> r.exchange()
-                                .getAttributeOrDefault(
-                                        CsrfToken.class.getName(),
-                                        Mono.empty().ofType(CsrfToken.class)
-                                ).flatMap(csrfToken -> {
-                                            r.exchange().getAttributes().put(csrfToken.getParameterName(), csrfToken);
-                                            return ServerResponse
-                                                    .ok()
-                                                    .render("login-form",
-                                                            r.exchange().getAttributes());
-                                        }
-                                )
+                        req -> ServerResponse
+                                .ok()
+                                .render("login-form",
+                                        req.exchange().getAttributes())
+
                 )
                 .andRoute(RequestPredicates.GET("/"),
-                        r -> r.principal()
+                        req -> req.principal()
                                 .ofType(Authentication.class)
                                 .flatMap(auth -> {
                                     User user = User.class.cast(auth.getPrincipal());
-                                    r.exchange()
+                                    req.exchange()
                                             .getAttributes()
                                             .putAll(Collections.singletonMap("user", user));
                                     return ServerResponse.ok().render("index",
-                                            r.exchange().getAttributes());
+                                            req.exchange().getAttributes());
                                 })
                 )
                 .andRoute(RequestPredicates.GET("/bye"),
-                        r -> ServerResponse.ok().render("bye")
+                        req -> ServerResponse.ok().render("bye")
                 )
-                .filter((q, r) ->
-                        q.exchange()
+                .filter((req, resHandler) ->
+                        req.exchange()
                                 .getAttributeOrDefault(
                                         CsrfToken.class.getName(),
                                         Mono.empty().ofType(CsrfToken.class)
                                 )
                                 .flatMap(csrfToken -> {
-                                    q.exchange()
+                                    req.exchange()
                                             .getAttributes()
                                             .put(csrfToken.getParameterName(), csrfToken);
-                                    return r.handle(q);
+                                    return resHandler.handle(req);
                                 })
 
                 );
