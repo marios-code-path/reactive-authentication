@@ -122,23 +122,34 @@ Lets take a look at how we want thise site to get rendered. First lets take a lo
 Mustache lets us use includes for re-usable content. We will create 3 common fragements for our views.
 
 frag/header.html:
+
+```html
     <!doctype html>
     <html lang="en">
     <body>
+```
 
 frag/footer.html:
+
+```html
     </body>
     </html>
+```
 
 frag/logout.html:
+
+```html
     <form class="form-inline" action="/logout" method="post">
         <input type="hidden" name="_csrf" value="{{_csrf.token}}" />
         <button class="btn btn-lg btn-primary btn-block" type="submit">Escape!</button>
     </form>
+```
 
 Next we can define the meat of our content. We just need a login, game, and logout page.
 
 index.html:
+
+```html
     {{>frag/header}}
     <h1>West of House</h1>
     <div>Hello, {{user.username}}. You are standing in an open field west of a white house, with a boarded front door.<br/>
@@ -147,8 +158,11 @@ index.html:
     &gt;<image src="/images/cursor.gif" />
     {{>frag/logout}}
     {{>frag/footer}}
+```
 
 login-form.html:
+
+```html
     {{>frag/header}}
     <h1>Welcome to Sp0rk. This version created 21-JUL-2018</h1>
     <div id="main-content" class="container">
@@ -171,8 +185,11 @@ login-form.html:
         </div>
     </div>
     {{>frag/footer}}
+```
 
 bye.html:
+
+```html
     {{>frag/header}}
     <h1>Leaving the Great Underground Empire</h1>
     <div>
@@ -180,10 +197,13 @@ bye.html:
     </div>
     <br/>
     {{>frag/footer}}
+```
 
 Lets configure the class into Spring WebFlux that lets us return mustache views. We can add MustacheViewResolver to our WebFlux Configuration. This makes it so that the viewResolver selects MustacheView's as the type compiled and shown on screen.
 
 WebConfig.java:
+
+```html
     @Configuration
     class WebConfig implements WebFluxConfigurer {
 
@@ -201,6 +221,7 @@ WebConfig.java:
         }
 
     }
+```
 
 # Routing to views
 
