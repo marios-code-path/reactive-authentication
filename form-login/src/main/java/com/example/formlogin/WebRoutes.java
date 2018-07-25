@@ -37,6 +37,9 @@ public class WebRoutes {
                                         req.exchange().getAttributes())
 
                 )
+                .andRoute(RequestPredicates.GET("/bye"),
+                        req -> ServerResponse.ok().render("bye")
+                )
                 .andRoute(RequestPredicates.GET("/"),
                         req -> req.principal()
                                 .ofType(Authentication.class)
@@ -45,12 +48,9 @@ public class WebRoutes {
                                     req.exchange()
                                             .getAttributes()
                                             .putAll(Collections.singletonMap("user", user));
-                                    return ServerResponse.ok().render("index",
+                                    return ServerResponse.ok().render("game",
                                             req.exchange().getAttributes());
                                 })
-                )
-                .andRoute(RequestPredicates.GET("/bye"),
-                        req -> ServerResponse.ok().render("bye")
                 )
                 .filter((req, resHandler) ->
                         req.exchange()

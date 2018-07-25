@@ -17,6 +17,8 @@ This demonstration examines Spring Security WebFlux's Authentication mechanisms.
 Normally, start with the website specifics, but we will begin with security configuration since this is a security-related article. With the @EnableWebFluxSecurity on, we can build the SecurityWebFilterChain by issuing commands to the ServerHttpSecurity DSL object.
 
 SecurityConfiguration.java:
+
+```java
     @EnableWebFluxSecurity
     @Slf4j
     @Configuration
@@ -24,10 +26,13 @@ SecurityConfiguration.java:
 
         @Bean
         public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
+```
 
 Next, we can open all of the public-facing endpoints by using a PathMatcher to match our public routes, by applying permitAll to open permissions there.
 
 SecurityConfiguration.java:
+
+```java
             return http
                     .authorizeExchange()
                     .pathMatchers("/login",
@@ -35,8 +40,9 @@ SecurityConfiguration.java:
                             "/favicon.ico",
                             "/images/**")
                     .permitAll()
+```
 
-For this example, we want every endpoint thats not publicly available to require a logged-in user. Wire in a PathMatcher for all routes, and apply the authenticated() operator to whatever matches. 
+For this example, we want every endpoint thats not publicly available to require a logged-in user. Wire in a PathMatcher for all routes, and apply the authenticated() operator to whatever matches.
 
 ### CSRF Configuration
 
@@ -45,16 +51,23 @@ Another component for when configuring SecurityWebFilterChain is the [CsrfSpec](
 To configure CSRF metadata behaviour, create a bean of type [ServerCsrfTokenRepository](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/web/server/csrf/ServerCsrfTokenRepository.html) and set header and/or parameter attrubte names as needed. In this demo we will use the default options, so '_csrf' becomes our parameter namd, and 'X-CSRF-TOKEN' is our header.
 
 SecurityConfiguration.java:
+
+```java
                     .pathMatchers("/**")
                     .authenticated()
                     .and()
                     .csrf()
+```
+
+### Login/logout Configuration
 
 Spring Security provides login/logout pages on demand whenever one is not already configured. This is provided by the LoginPageGeneratingWebFilter and LogoutPageGeneratingWebFilter that get wired in if no login/logout page was specified.
 
 To override this, we can issue loginPage("/") and it's success/error Handlers within the FormLoginSpec. We want to redirect successes to the home page by using RedirectServerAuthenticationSuccessHandler.  Then For logout successes, we'll send the user to the "/bye" endpoint by configuring the RedirectServerLogoutSuccessHandler in a separate method since it's contructor doesnt support parameters.
 
 SecurityConfiguration.java:
+
+```java
                     .and()
                     .formLogin()
                         .loginPage("/login")
@@ -74,17 +87,20 @@ SecurityConfiguration.java:
         }
 
     }
+```
 
-Both handlers do somilar things - namely redirect on success. Its jsut that we have to expelicitly construct the logoutSuccessHandler since it's constructor is no-args.
+Both handlers do somilar things - namely redirect on success. Its just that we have to expelicitly construct the logoutSuccessHandler since it's constructor only allows no-args.
 
-### Expressing Users
+### Configuring Users
 
 The [UserDetailsRepositoryReactiveAuthenticationManager](https://docs.spring.io/spring-security/site/docs/5.0.3.RELEASE/api/org/springframework/security/authentication/UserDetailsRepositoryReactiveAuthenticationManager.html)
 bean is provided automatically if there are no other configured [ReactiveAuthenticationManager](http://ReactiveAuthenticationManager) `@Bean` definitions. This authentication manager defers principal/credential operations to a [ReactiveUserDetailsService](https://docs.spring.io/spring-security/site/docs/5.1.0.M1/api/org/springframework/security/core/userdetails/ReactiveUserDetailsService.html) implementation.
 
-Spring comes with ready-made implemenations for storing and looking up users in the [MapReactiveUserDetailsService](http://MapReactiveUserDetailsService). We'll complete this section using the map reactive implementation, and by having our users come from the handly `User` object since no other details are necessary for [customizing the user](http://link-to-http-basic-article).
+Spring comes with ready-made implemenations for storing and looking up users in the [MapReactiveUserDetailsService](http://MapReactiveUserDetailsService). We'll complete this section using the map reactive implementation, and by having our users come from the handly [User](http://spring-user-object) object since no other details are necessary for [customizing the user](http://link-to-http-basic-article).
 
 UserDetailBeans.java:
+
+```java
     @Configuration
     public class UserDetailServiceBeans {
 
@@ -112,10 +128,11 @@ UserDetailBeans.java:
                         user("odin", "ROLE_ADMIN", "ROLE_USER")
                 ));
     }
+```
 
 ## An example website
 
-The website uses just 2 pages to describe a game. The game text is tanken from Infocom's Zork text-based adventure. In this demo we will have a user login, and finally do something to escalate permission. We will walk throuigh componentry needed to accomplish this task. Spring Security provides a reactive way for describing security constraints within your web app.  
+The website uses just 3 pages to describe a game. The game text is tanken from Infocom's Zork text-based adventure. In this demo we will have a user login, and finally do something to escalate permission. We will walk throuigh componentry needed to accomplish this task. Spring Security provides a reactive way for describing security constraints within your web app.  
 
 Lets take a look at how we want thise site to get rendered. First lets take a look at WebFlux MVC which lets us expose mustache views. We have a entry view we want to surface, so by creating these templates, we have a full view complement.
 
@@ -199,6 +216,8 @@ bye.html:
     {{>frag/footer}}
 ```
 
+## Reactive Mustache
+
 Lets configure the class into Spring WebFlux that lets us return mustache views. We can add MustacheViewResolver to our WebFlux Configuration. This makes it so that the viewResolver selects MustacheView's as the type compiled and shown on screen.
 
 WebConfig.java:
@@ -225,12 +244,13 @@ WebConfig.java:
 
 # Routing to views
 
-We need to wire up our views with routing logic, so lets add this with the functional style RouterFunction.
+We need to wire up our views with routing logic, so lets add this with the functional style [RouterFunction](http://router-functions-doc).
 
-We need a way to display icons, so first we will wire in a 'favicon.ico' route, and send it to a ClassPath resource for file resolution.
-
+We need a way to display icons, so first we will wire in a 'favicon.ico' route, and send it to a ClassPath resource for classpath resolution. Alternately, we could imply that the file exists on the local FileSystem by using a [FileSystemResource](http://file-system-resource).
 
 WebRoutes.java:
+
+```java
     @Component
     public class WebRoutes {
 
@@ -239,8 +259,13 @@ WebRoutes.java:
             return RouterFunctions
                     .resources("/favicon.**", new ClassPathResource("images/favicon.ico"));
         }
+```
+
+Next we will have a route to the login page.  Since we already overrided the default location in ServerHttpSecurity, we must provide the route to our new login page. Also included in this example is our logout landing page. it can be any URL you select, for this example we have a single page to tell the user 'goodbye'.
 
 WebRoutes.java:
+
+```java
     @Bean
     RouterFunction<?> viewRoutes() {
         return RouterFunctions
@@ -249,67 +274,56 @@ WebRoutes.java:
                                 .ok()
                                 .render("login-form",
                                         req.exchange().getAttributes())
-
                 )
+                .andRoute(RequestPredicates.GET("/bye"),
+                        req -> ServerResponse.ok().render("bye")
+                )
+```
 
+## Data Model for Views
 
-## Types of Routing
+The last route will require some information about the user logged in. We can construct the model for our mustache template by incluing a `Map<String, Object>` as the second argument to the `render()` method.
 
-Next, lets add the route to our favicon.ico. We can use a .resources function in RouterFunctions that exposes us FileSystem and ClassPath resources for a given route.
+To get to the logged-in user, we get the principal from the [ServerRequest](http://server-request)object, cast it to it's value type, and inject it into request attributes Map under the 'user' key. The attributes map (model object) is then passed in to the `render()` function.
 
+WebRoutes.java:
 
-## Filtering views
+```java
+                .andRoute(RequestPredicates.GET("/"),
+                        req -> req.principal()
+                                .ofType(Authentication.class)
+                                .flatMap(auth -> {
+                                    User user = User.class.cast(auth.getPrincipal());
+                                    req.exchange()
+                                            .getAttributes()
+                                            .putAll(Collections.singletonMap("user", user));
+                                    return ServerResponse.ok().render("game",
+                                            req.exchange().getAttributes());
+                                })
+                )
+```
+
+## CSRF, and View Filtering
+
+WebRoutes.java:
+
+```java
+                .filter((req, resHandler) ->
+                        req.exchange()
+                                .getAttributeOrDefault(
+                                        CsrfToken.class.getName(),
+                                        Mono.empty().ofType(CsrfToken.class)
+                                )
+                                .flatMap(csrfToken -> {
+                                    req.exchange()
+                                            .getAttributes()
+                                            .put(csrfToken.getParameterName(), csrfToken);
+                                    return resHandler.handle(req);
+                                })
+
+                );
+    }
+```
+
 
 ## Public Views
-
-# Securing the application
-
-SecurityConfiguration.java:
-    @EnableWebFluxSecurity
-    @EnableReactiveMethodSecurity
-    @Slf4j
-    @Configuration
-    public class SecurityConfiguration {
-
-        @Bean
-        public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
-
-            return http
-                    .authorizeExchange()
-                    .pathMatchers("/login",
-                            "/bye",
-                            "/favicon.ico",
-                            "/images/**")
-                    .permitAll()
-                    .pathMatchers("/**")
-                    .hasRole("USER")
-                    .and()
-                    .formLogin()
-                        .loginPage("/login")
-                        .authenticationSuccessHandler(new RedirectServerAuthenticationSuccessHandler("/"))
-                    .and()
-                    .logout()
-                        .logoutUrl("/logout")
-                        .logoutSuccessHandler(logoutSuccessHandler("/bye"))
-                    .and()
-                    .csrf()
-                    .and()
-                    .build();
-        }
-
-        public ServerLogoutSuccessHandler logoutSuccessHandler(String uri) {
-            RedirectServerLogoutSuccessHandler successHandler = new RedirectServerLogoutSuccessHandler();
-            successHandler.setLogoutSuccessUrl(URI.create(uri));
-            return successHandler;
-
-        }
-    }
-
-## public views
-
-## authorized views
-
-## login/logout views
-
-## implementation and example
-
