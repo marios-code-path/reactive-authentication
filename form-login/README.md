@@ -305,7 +305,10 @@ WebRoutes.java:
 
 ## CSRF, and View Filtering
 
-WebRoutes.java:
+During ServerHttpSecurity configuration, we added the line for `csrf()` that has the effect of implementing request/response filtering. The effect of this Filter - [CsrfWebFilter](http://csrf-filter) is to create, store and validate csrf tokens where seen or needed. We can expose the CSRF token by including the form entry '_csrf' and accessing our view model to extract the token value.
+Remember that the parameter and headers names may be changed by additional configuration to the [CsrfWebSpec](http://csrf-spec) during configuration.
+
+This filter allows us to access the CSRF token per request, or as needed if you are explicit about the paths that must be matched. CSRF tokens are stored as the classname `org.springframework.security.web.csrf` within the request attributes map. We can access this and determine how to expose it to the view by calling the token `parameterName()` method (then placing the token as that name in the map).
 
 ```java
                 .filter((req, resHandler) ->
