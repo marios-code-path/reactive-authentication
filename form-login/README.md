@@ -358,6 +358,12 @@ public class FormLoginApp {
 }
 ```
 
+Execute the application by running it in your IDE or by executing the following comand in a bash window.
+
+```bash
+    mvn spring-boot:run
+```
+
 ## Conclusion
 
 This simple web was made to demonstratekey concepts in obtaining successful authentication from a user that is browser-bound. We looked at wiring up CSRF, Mustache views, login/logout customization, and Routing/Filtering in the WebFlux environment.
