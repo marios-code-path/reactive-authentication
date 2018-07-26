@@ -14,7 +14,7 @@ import java.util.Collection;
 
 
 @Configuration
-public class UserDetailServiceBeans {
+public class UserConfiguration {
 
     private static final PasswordEncoder pw = PasswordEncoderFactories.createDelegatingPasswordEncoder();
 

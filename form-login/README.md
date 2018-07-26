@@ -130,7 +130,7 @@ UserDetailBeans.java:
     }
 ```
 
-## An example website
+## The Mustache Website
 
 The website uses just 3 pages to describe a game. The game text is tanken from Infocom's Zork text-based adventure. In this demo we will have a user login, and finally do something to escalate permission. We will walk throuigh componentry needed to accomplish this task. Spring Security provides a reactive way for describing security constraints within your web app.  
 
@@ -214,6 +214,18 @@ bye.html:
     </div>
     <br/>
     {{>frag/footer}}
+```
+
+### Configuring mustache views
+
+To let mustache view resolver know where to find our templates, how to handle view objects, we set the specific options for this.  Using `expose-request-attributes` allows us to access our request's view attributes from within the template.
+
+application.properties
+
+```properties
+    spring.mustache.prefix=classpath:/templates/mustache/
+    spring.mustache.suffix=.html
+    spring.mustache.expose-request-attributes=true
 ```
 
 ## Reactive Mustache
@@ -328,5 +340,24 @@ This filter allows us to access the CSRF token per request, or as needed if you 
     }
 ```
 
+## Application execution Entry
 
-## Public Views
+This simple app requires no additional configuration beyond [EnableWebFlux](http://enable-web-flux-annotation) and [SpringBootApplication](http://spring-boot-applkication) annotations.
+
+App.java:
+
+```java
+@SpringBootApplication
+@EnableWebFlux
+public class FormLoginApp {
+
+    public static void main(String[] args) {
+        SpringApplication app = new SpringApplication(FormLoginApp.class);
+        app.run();
+    }
+}
+```
+
+## Conclusion
+
+This simple web was made to demonstratekey concepts in obtaining successful authentication from a user that is browser-bound. We looked at wiring up CSRF, Mustache views, login/logout customization, and Routing/Filtering in the WebFlux environment.
