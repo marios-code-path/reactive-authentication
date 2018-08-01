@@ -24,24 +24,24 @@ public class SecurityConfiguration {
 
         return http
                 .authorizeExchange()
-                .pathMatchers("/login",
+                    .pathMatchers("/login",
                         "/bye",
                         "/favicon.ico",
                         "/images/**")
-                .permitAll()
-                .pathMatchers("/**")
-                .authenticated()
-                .and()
+                    .permitAll()
+                    .pathMatchers("/**")
+                    .authenticated()
+                    .and()
                 .formLogin()
-                .loginPage("/login")
-                .authenticationSuccessHandler(new RedirectServerAuthenticationSuccessHandler("/"))
-                .and()
+                    .loginPage("/login")
+                    .authenticationSuccessHandler(new RedirectServerAuthenticationSuccessHandler("/"))
+                    .and()
                 .logout()
-                .logoutUrl("/logout")
-                .logoutSuccessHandler(logoutSuccessHandler("/bye"))
-                .and()
+                    .logoutUrl("/logout")
+                    .logoutSuccessHandler(logoutSuccessHandler("/bye"))
+                    .and()
                 .csrf()
-                .and()
+                    .and()
                 .build();
     }
 
