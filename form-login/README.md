@@ -8,7 +8,7 @@ categories = ["appsec","security","reactive"]
 tags = ["functional","java","spring","web","forms","demo"]
 +++
 
-# Customized Web Form entry/exit app
+# Customized WebFlux Form Authentication
 
 This demonstration examines Spring Security WebFlux's Authentication mechanisms. We will look at authentication with HTML forms using Mustache, User Authentication, and customized form-based login / logout configurations.
 
