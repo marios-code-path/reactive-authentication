@@ -8,9 +8,9 @@ categories = ["appsec","security","reactive"]
 tags = ["functional","java","spring","web","forms","demo"]
 +++
 
-# Configuring Form Login Against a WebFlux App
+# Customized Web Form entry/exit app
 
-This demonstration examines Spring Security WebFlux's Authentication mechanisms. We will look at authentication with HTML forms using Mustache, User Authentication, and customized login / logout configurations.
+This demonstration examines Spring Security WebFlux's Authentication mechanisms. We will look at authentication with HTML forms using Mustache, User Authentication, and customized form-based login / logout configurations.
 
 ## The ServerHttpSecurity Configuration
 
@@ -77,6 +77,8 @@ Note: Currently supported token repository exists are:
 |[WebSessionServerCsrfTokenRepository](WebSessionServerCsrfTokenRepository)| Store CSRF token in a Web Session |
 |[CookieServerCsrfTokenRepository](https://docs.spring.io/spring-security/site/docs/5.1.0.BUILD-SNAPSHOT/api/org/springframework/security/web/server/csrf/CookieServerCsrfTokenRepository.html)| Store CSRF token in custom cookie |
 
+Later, we will customize how CSRF tokens get included to our web page through custom filtering.
+
 ### Customizing Login/logout
 
 Spring Security provides login/logout pages on demand whenever one is not already configured. This is provided by the [LoginPageGeneratingWebFilter](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/web/server/ui/LoginPageGeneratingWebFilter.html) and [LogoutPageGeneratingWebFilter](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/web/server/ui/LogoutPageGeneratingWebFilter.html) that get wired in if no login/logout page was specified.
@@ -111,7 +113,7 @@ Both handlers do similar things - namely redirect on success. Expelicitly constr
 
 Next, we will look at how user/pass pairs are authenticated. This is done by a subclass of [ReactiveAuthenticationManager](https://docs.spring.io/spring-security/site/docs/5.1.0.BUILD-SNAPSHOT/api/org/springframework/security/authentication/ReactiveAuthenticationManager.html).
 
-### Authenticating Users
+## Authenticating Users
 
 [UserDetailsRepositoryReactiveAuthenticationManager](https://docs.spring.io/spring-security/site/docs/5.0.3.RELEASE/api/org/springframework/security/authentication/UserDetailsRepositoryReactiveAuthenticationManager.html)
 bean is provided automatically if there are no other configured [ReactiveAuthenticationManager](http://ReactiveAuthenticationManager) `@Bean` definitions. This authentication manager defers principal/credential operations to a [ReactiveUserDetailsService](https://docs.spring.io/spring-security/site/docs/5.1.0.M1/api/org/springframework/security/core/userdetails/ReactiveUserDetailsService.html) implementation.
@@ -192,7 +194,7 @@ WebConfig.java:
 This configuration will populate a [MustacheViewResolver](https://docs.spring.io/spring-boot/docs/current/api/org/springframework/boot/web/reactive/result/view/MustacheViewResolver.html())
 into the [ViewResolverRegistry](https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/web/reactive/config/ViewResolverRegistry.html).
 
-## Mustache Web Content
+### Mustache Web Content
 
 Mustache lets us use includes for re-usable content. We will create 3 common fragements for our views.
 
@@ -274,7 +276,7 @@ bye.html:
     {{>frag/footer}}
 ```
 
-### Configuring mustache views
+### Configuring Mustache Behaviour
 
 To let Mustache view resolver know where to find our templates, how to handle view objects, we set the specific options for this.  Using `expose-request-attributes` allows us to access our request's view attributes from within the template.
 
@@ -286,7 +288,7 @@ application.properties
     spring.mustache.expose-request-attributes=true
 ```
 
-# Routing to views
+## Routing to views
 
 We need to wire up our views with routing logic, so lets add this with the functional style [RouterFunction](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/reactive/function/server/RouterFunction.html).
 
@@ -347,31 +349,6 @@ WebRoutes.java:
                 )
 ```
 
-## CSRF, and View Filtering
-
-During ServerHttpSecurity configuration, we added the line for `csrf()` that has the effect of implementing request/response filtering. The effect of this Filter - [CsrfWebFilter](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/web/server/csrf/CsrfWebFilter.html) is to create, store and validate csrf tokens where seen or needed. We can expose the CSRF token by including the form entry '_csrf' and accessing our view model to extract the token value.
-Remember that the parameter and headers names may be changed by additional configuration to the [CsrfSpec](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/config/web/server/ServerHttpSecurity.CsrfSpec.html) during configuration.
-
-This filter allows us to access the CSRF token per request, or as needed if you are explicit about the paths that must be matched. CSRF tokens are stored as the classname `org.springframework.security.web.csrf` within the request attributes map. We can access this and determine how to expose it to the view by calling the token `parameterName()` method (then placing the token as that name in the model map).
-
-```java
-                .filter((req, resHandler) ->
-                        req.exchange()
-                                .getAttributeOrDefault(
-                                        CsrfToken.class.getName(),
-                                        Mono.empty().ofType(CsrfToken.class)
-                                )
-                                .flatMap(csrfToken -> {
-                                    req.exchange()
-                                            .getAttributes()
-                                            .put(csrfToken.getParameterName(), csrfToken);
-                                    return resHandler.handle(req);
-                                })
-
-                );
-    }
-```
-
 ## Application execution Entry
 
 This simple app requires no additional configuration beyond [EnableWebFlux](http://enable-web-flux-annotation) and [SpringBootApplication](http://spring-boot-applkication) annotations.
@@ -396,6 +373,6 @@ Execute the application by running it in your IDE or by executing the following 
     mvn spring-boot:run
 ```
 
-## Conclusion
+# Conclusion
 
 This simple web was made to demonstratekey concepts in obtaining successful authentication from a user that is browser-bound. We looked at wiring up CSRF, Mustache views, login/logout customization, and Routing/Filtering in the WebFlux environment.
